@@ -1,25 +1,43 @@
-const express = require('express')
+const express = require("express");
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const { validateBody, isValidId } = require("../../middlewares");
 
-router.get('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const {
+  addSchema,
+  updateFavoriteSchema,
+  updateContactSchema,
+} = require("../../schemas");
 
-router.post('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const {
+  getAllContacts,
+  getContactById,
+  addContact,
+  updateContactById,
+  updateStatusContact,
+  deleteContactById,
+} = require("../../controllers");
 
-router.delete('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+router
+  .route("/")
+  .get(getAllContacts)
+  .post(validateBody(addSchema, "Set name for contact"), addContact);
 
-router.put('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+// встановлюємо middleware-функцію isValidId для всіх HTTP-запитів,
+// які співпадають з маршрутом "/:contactId"яка перевіряє валідність id.
+router.use("/:contactId", isValidId);
+router
+  .route("/:contactId")
+  .get(getContactById)
+  .delete(deleteContactById)
+  .put(validateBody(updateContactSchema, "missing fields"), updateContactById);
 
-module.exports = router
+router.patch(
+  "/:contactId/favorite",
+  isValidId,
+  validateBody(updateFavoriteSchema, "missing field favorite"),
+  updateStatusContact
+);
+
+module.exports = router;

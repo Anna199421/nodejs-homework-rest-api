@@ -1,25 +1,48 @@
-const express = require('express')
+const express = require("express");
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const { validateBody, isValidId, authenticate } = require("../../middlewares");
 
-router.get('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const {
+  addSchema,
+  updateFavoriteSchema,
+  updateContactSchema,
+} = require("../../schemas/contacts");
 
-router.post('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const {
+  getAllContacts,
+  getContactById,
+  addContact,
+  updateContactById,
+  updateStatusContact,
+  deleteContactById,
+} = require("../../controllers");
 
-router.delete('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+// встановлюємо middleware-функцію authenticate для всіх HTTP-запитів,
+// які співпадають з маршрутом "/" яка перевіряє чи залогінений юзер.
+router.use("/", authenticate);
+router
+  .route("/")
+  .get(getAllContacts)
+  .post(validateBody(addSchema, "Set name for contact"), addContact);
 
-router.put('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+// встановлюємо middleware-функцію isValidId для всіх HTTP-запитів,
+// які співпадають з маршрутом "/:contactId"яка перевіряє валідність id.
+// та middleware-функцію authenticate
+router.use("/:contactId", authenticate, isValidId);
+router
+  .route("/:contactId")
+  .get(getContactById)
+  .delete(deleteContactById)
+  .put(validateBody(updateContactSchema, "missing fields"), updateContactById);
 
-module.exports = router
+router.patch(
+  "/:contactId/favorite",
+  authenticate,
+  isValidId,
+  validateBody(updateFavoriteSchema, "missing field favorite"),
+  updateStatusContact
+);
+
+module.exports = router;

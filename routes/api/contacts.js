@@ -1,25 +1,45 @@
-const express = require('express')
+const express = require("express");
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const { validateBody, isValidId, authenticate } = require("../../middlewares");
 
-router.get('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const {
+  addSchema,
+  updateFavoriteSchema,
+  updateContactSchema,
+} = require("../../schemas");
 
-router.post('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const {
+  getAllContacts,
+  getContactById,
+  addContact,
+  updateContactById,
+  updateStatusContact,
+  deleteContactById,
+} = require("../../controllers");
 
-router.delete('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
 
-router.put('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+router.use("/", authenticate);
+router
+  .route("/")
+  .get(getAllContacts)
+  .post(validateBody(addSchema, "Set name for contact"), addContact);
 
-module.exports = router
+
+router.use("/:contactId", authenticate, isValidId);
+router
+  .route("/:contactId")
+  .get(getContactById)
+  .delete(deleteContactById)
+  .put(validateBody(updateContactSchema, "missing fields"), updateContactById);
+
+router.patch(
+  "/:contactId/favorite",
+  authenticate,
+  isValidId,
+  validateBody(updateFavoriteSchema, "missing field favorite"),
+  updateStatusContact
+);
+
+module.exports = router;
